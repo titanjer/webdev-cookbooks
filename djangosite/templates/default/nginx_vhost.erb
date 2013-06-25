@@ -1,0 +1,124 @@
+server {
+    server_name  <% node.djangosite.domains.each do |domain| %> <%= domain %><% end %>;
+
+    set $proj    <%= node.djangosite.name %>;
+    <% if @node.djangosite.package %>set $package <%= node.djangosite.package %>;<% end %>
+
+    access_log   /var/log/nginx/<%= node.djangosite.name %>.access.log;
+    error_log    /var/log/nginx/<%= node.djangosite.name %>.error.log;
+
+    client_max_body_size <%= node.djangosite.client_max_body_size %>;
+
+    ### No modifications/templatizations below this line are required ###
+
+    set $proj_root /home/$proj/project;
+    if ($package = ""){
+        set $package $proj;
+    }
+    set $django_proj_root $proj_root/$package;
+    set $media_root       $django_proj_root/media;
+
+    root   $media_root;
+    listen 80;
+
+    # we have no fancy stuff in django projects yet
+    if ($request_method !~ ^(POST|PUT|GET|HEAD)$){
+        return 444;
+    }
+
+    location / {
+        include            uwsgi_params;
+        root               $media_root/cache/fresh;
+        keepalive_timeout  0;
+        uwsgi_read_timeout 270;
+        uwsgi_send_timeout 180;
+
+        # redirect to https scheme if we have ssl enabled for this server
+        #if ($scheme != https){
+        #    set $ssl_https      "${ssl_is_on}0";
+        #}
+        #if ($ssl_https = "10"){
+        #    rewrite     ^(.*)   https://$server_name$1 permanent;
+        #}
+
+        # This does not work with uploadprogress, which wants POST too.
+        # Pass all POST requests right to django:
+        #if ($request_method = POST) {
+        #    uwsgi_pass unix:$proj_root/tmp/uwsgi.sock;
+        #    break;
+        #}
+
+        # staticgenerator cache check
+        if ($http_x_requested_with = XMLHttpRequest) {
+            set $is_ajax ",ajax";
+        }
+        if (-f $request_filename/index.html%3F$args$is_ajax) {
+            rewrite (.*) /cache/fresh/$1/index.html%3F$args$is_ajax last;
+        }
+
+            # *_pass should be outside of any 'if' block to make upload progress module happy
+            uwsgi_pass    unix:$proj_root/tmp/uwsgi.sock;
+            track_uploads uprogr 180s;
+        }
+
+        # staticgenerator cache location.
+        # root is inherited from server and is at $media_root.
+        location /cache/fresh/ {
+            internal;
+            default_type text/html;
+            gzip_static  on;
+            # if-modified-since works pretty well here
+            #expires     modified    +12h;
+            add_header   X-Cache-Hit true;
+        }
+
+        # TODO: ask how to avoid this non-DRY block.
+        # named location to use as a fallback in try_files directives only.
+        # (currently used only for robots/sitemap)
+        location @django {
+            include           uwsgi_params;
+            keepalive_timeout 0;
+            uwsgi_pass        unix:$proj_root/tmp/uwsgi.sock;
+        }
+
+    location ^~ /uploadprogress {
+        # report uploads tracked in the 'uprogr' zone
+        upload_progress_json_output;
+        report_uploads uprogr;
+    }
+
+    # not the best solution:
+    # dumb rss readers expect to find the icon in the request root,
+    # also makes some browsers searching for icon on site root happy.
+    location ~* ^.+favicon\.(ico|png)$ {
+        rewrite     ^.+(favicon\.(ico|png))$ /static/img/$1 break;
+        access_log  off;
+    }
+
+    # keep in mind server root is 'projectname/media/':
+    # - first try to read file 'media/uploads/$uri', (uploaded by user)
+    # - then 'media/$uri', (handled by git)
+    # - fallback passing the same '$uri' to django
+    location ~* ^/(robots.txt|sitemap.xml)$ {
+        access_log  off;
+        try_files   /uploads/$uri $uri @django;
+    }
+
+    # server root is at 'media' but the request url would contain the 'media/foo/bar.png'
+    # so we need to map 'media' part of the request to the $media_root
+    location /media/ {
+        root        $django_proj_root;
+        access_log  off;
+    }
+    location ^~ /media/uploads/ {
+        root        $django_proj_root;
+        access_log  off;
+        expires     1y;
+    }
+    location ~* "^/media/static/.+\.[0-9a-f]{12}\.\w{1,}$" {
+        root        $django_proj_root;
+        access_log  off;
+        expires     max;
+        gzip_static on;
+    }
+}

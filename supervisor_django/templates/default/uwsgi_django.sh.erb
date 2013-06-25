@@ -1,0 +1,47 @@
+#!/bin/bash
+
+export LANG='en_US.UTF-8'
+export LC_ALL='en_US.UTF-8'
+
+PROJDIR=`pwd`
+PROJECT=$(basename $(dirname $PROJDIR))
+PACKAGE=${PACKAGE:=$PROJECT}
+PIDFILE="$PROJDIR/tmp/uwsgi.pid"
+SOCKET="$PROJDIR/tmp/uwsgi.sock"
+
+UWSGI_BIN=${UWSGI_BIN:="<%= node.supervisor_django.uwsgi.binary %>"}
+MAXREQUESTS=${MAXREQUESTS:=2500}
+PROCESSES=${PROCESSES:=1}
+QUEUE=${QUEUE:=16}
+AS=${AS:=256}
+RELOAD_ON_AS=${RELOAD_ON_AS:=96}
+RELOAD_ON_RSS=${RELOAD_ON_RSS:=48}
+HARAKIRI_SEC=${HARAKIRI_SEC:=90}
+
+[ -f uwsgi.ini ] && INI="--ini uwsgi.ini"
+
+exec $UWSGI_BIN \
+	--plugins python27 \
+	--pyhome "$(dirname $PROJDIR)/.env" \
+	--env DJANGO_SETTINGS_MODULE=$PACKAGE.settings \
+	--module $PACKAGE.wsgi:application \
+	--procname "$PROJECT: django uwsgi" \
+	--procname-master "$PROJECT: master uwsgi" \
+	--master \
+	--lazy \
+	--enable-threads \
+	--no-orphans \
+	--disable-logging \
+	--chmod-socket=666 \
+	--pidfile=$PIDFILE \
+	--socket $SOCKET \
+	--processes $PROCESSES \
+	--listen $QUEUE \
+	--max-requests $MAXREQUESTS \
+	--harakiri $HARAKIRI_SEC \
+	--harakiri-verbose \
+	--reload-mercy 6 \
+	--limit-as $AS \
+	--evil-reload-on-as $RELOAD_ON_AS \
+	--evil-reload-on-rss $RELOAD_ON_RSS \
+	--show-config $INI
