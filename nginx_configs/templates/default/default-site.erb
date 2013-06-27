@@ -1,0 +1,9 @@
+server {
+  listen      80 default_server;
+  access_log  <%= node['nginx']['log_dir'] %>/default.access.log;
+
+  location / {
+    root   /var/www/nginx/default-site;
+    index  index.html;
+  }
+}
