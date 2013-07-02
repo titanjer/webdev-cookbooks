@@ -6,21 +6,23 @@ export LC_ALL='en_US.UTF-8'
 PROJDIR=`pwd`
 PROJECT=$(basename $(dirname $PROJDIR))
 PACKAGE=${PACKAGE:=$PROJECT}
-PIDFILE="$PROJDIR/tmp/uwsgi.pid"
-SOCKET="$PROJDIR/tmp/uwsgi.sock"
 
-UWSGI_BIN=${UWSGI_BIN:="<%= node.supervisor_django.uwsgi.binary %>"}
-MAXREQUESTS=${MAXREQUESTS:=2500}
-PROCESSES=${PROCESSES:=1}
-QUEUE=${QUEUE:=16}
-AS=${AS:=256}
-RELOAD_ON_AS=${RELOAD_ON_AS:=96}
-RELOAD_ON_RSS=${RELOAD_ON_RSS:=48}
-HARAKIRI_SEC=${HARAKIRI_SEC:=90}
+UWSGI_PIDFILE=${UWSGI_PIDFILE:="$PROJDIR/tmp/uwsgi.pid"}
+UWSGI_SOCKET=${UWSGI_SOCKET:="$PROJDIR/tmp/uwsgi.sock"}
+UWSGI_BINARY_PATH=${UWSGI_BINARY_PATH:="<%= node.supervisor_django.uwsgi.binary %>"}
+
+UWSGI_MAX_REQUESTS=${UWSGI_MAX_REQUESTS:=2500}
+UWSGI_PROCESSES=${UWSGI_PROCESSES:=1}
+UWSGI_LISTEN=${UWSGI_LISTEN:=16}
+UWSGI_LIMIT_AS=${UWSGI_LIMIT_AS:=256}
+UWSGI_EVIL_RELOAD_ON_AS=${UWSGI_EVIL_RELOAD_ON_AS:=$UWSGI_LIMIT_AS}
+UWSGI_EVIL_RELOAD_ON_RSS=${UWSGI_EVIL_RELOAD_ON_RSS:=96}
+UWSGI_HARAKIRI=${UWSGI_HARAKIRI:=90}
 
 [ -f uwsgi.ini ] && INI="--ini uwsgi.ini"
 
-exec $UWSGI_BIN \
+exec $UWSGI_BINARY_PATH \
+	--binary-path $UWSGI_BINARY_PATH \
 	--plugins python27 \
 	--pyhome "$(dirname $PROJDIR)/.env" \
 	--env DJANGO_SETTINGS_MODULE=$PACKAGE.settings \
@@ -33,15 +35,16 @@ exec $UWSGI_BIN \
 	--no-orphans \
 	--disable-logging \
 	--chmod-socket=666 \
-	--pidfile=$PIDFILE \
-	--socket $SOCKET \
-	--processes $PROCESSES \
-	--listen $QUEUE \
-	--max-requests $MAXREQUESTS \
-	--harakiri $HARAKIRI_SEC \
+	--pidfile=$UWSGI_PIDFILE \
+	--socket $UWSGI_SOCKET \
+	--processes $UWSGI_PROCESSES \
+	--listen $UWSGI_LISTEN \
+	--max-requests $UWSGI_MAX_REQUESTS \
+	--harakiri $UWSGI_HARAKIRI \
 	--harakiri-verbose \
 	--reload-mercy 6 \
-	--limit-as $AS \
-	--evil-reload-on-as $RELOAD_ON_AS \
-	--evil-reload-on-rss $RELOAD_ON_RSS \
-	--show-config $INI
+	--limit-as $UWSGI_LIMIT_AS \
+	--evil-reload-on-as $UWSGI_EVIL_RELOAD_ON_AS \
+	--evil-reload-on-rss $UWSGI_EVIL_RELOAD_ON_RSS \
+	--show-config \
+	$INI
