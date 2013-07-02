@@ -1,3 +1,9 @@
+# A workaround to allow rebuild on top of stale files
+directory "/tmp/pip-build-root/uwsgi" do
+  action :delete
+  recursive true
+end
+
 python_pip "uwsgi" do
   version node['supervisor_django']['uwsgi']['version']
 end
