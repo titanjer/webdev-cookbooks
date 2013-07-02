@@ -1,5 +1,5 @@
 python_pip "uwsgi" do
-  version "1.1.2"
+  version node['supervisor_django']['uwsgi']['version']
 end
 
 template "#{node.supervisor_django.uwsgi.wrapper}" do
