@@ -2,7 +2,7 @@ name              "supervisor_django"
 maintainer        "Mikhail Kolesnik"
 maintainer_email  "mike@openbunker.org"
 description       "Configures Supervisor to run a Django site with uWSGI"
-version           "0.0.1"
+version           "0.0.2"
 
 recipe "supervisor_django", "Configures Supervisor to run a Django site with uWSGI."
 
