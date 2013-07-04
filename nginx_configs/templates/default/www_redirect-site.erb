@@ -1,0 +1,5 @@
+server {
+  server_name ~^www\.(.+)$;
+  set $nowwwdomain $1;
+  rewrite ^ $scheme://$nowwwdomain$uri permanent;
+}

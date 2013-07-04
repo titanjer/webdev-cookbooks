@@ -12,6 +12,17 @@ cookbook_file "#{node['nginx']['dir']}/mime.types" do
   group "root"
 end
 
+template "#{node['nginx']['dir']}/sites-available/www_redirect" do
+  source "www_redirect-site.erb"
+  owner "root"
+  group "root"
+  mode "0644"
+end
+
+nginx_site 'www_redirect' do
+  enable node['nginx_configs']['www_redirect_site_enabled']
+end
+
 template "#{node['nginx']['dir']}/sites-available/default" do
   source "default-site.erb"
   owner "root"

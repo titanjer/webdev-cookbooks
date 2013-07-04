@@ -6,8 +6,11 @@ version           "0.0.3"
 
 recipe "nginx_configs", "Adds a few Nginx configuration files."
 
-
 depends 'nginx'
+
+
+attribute "nginx_configs/www_redirect_site_enabled",
+  :default => "true"
 
 attribute "nginx_configs/default_site_enabled",
   :default => "true"
