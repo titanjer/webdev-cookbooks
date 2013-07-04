@@ -27,8 +27,7 @@ template "#{node['nginx']['dir']}/sites-available/default" do
   source "default-site.erb"
   owner "root"
   group "root"
-  mode 00644
-  notifies :reload, 'service[nginx]'
+  mode "0644"
 end
 
 directory "/var/www/nginx/default-site"
