@@ -13,5 +13,5 @@ attribute "supervisor_django/uwsgi/binary",
   :default => "/usr/local/bin/uwsgi"
 
 attribute "supervisor_django/uwsgi/wrapper",
-  :display_name => "path to the uWSGI binary Django wrapper script",
+  :display_name => "path to the uWSGI wrapper script for Django WSGI app",
   :default => "/usr/local/bin/uwsgi_django.sh"
