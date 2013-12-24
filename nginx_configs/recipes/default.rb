@@ -12,6 +12,20 @@ cookbook_file "#{node['nginx']['dir']}/mime.types" do
   group "root"
 end
 
+cookbook_file "#{node['nginx']['dir']}/countries.conf" do
+  source "countries.conf"
+  mode "0644"
+  owner "root"
+  group "root"
+end
+
+template "#{node['nginx']['dir']}/conf.d/geo.conf" do
+  source "geo.conf.erb"
+  mode "0644"
+  owner "root"
+  group "root"
+end
+
 template "#{node['nginx']['dir']}/sites-available/www_redirect" do
   source "www_redirect-site.erb"
   owner "root"

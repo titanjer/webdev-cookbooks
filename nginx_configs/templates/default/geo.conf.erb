@@ -1,0 +1,4 @@
+geo $country {
+  default  ZZ;
+  include  <%= node['nginx']['dir'] %>/countries.conf;
+}
