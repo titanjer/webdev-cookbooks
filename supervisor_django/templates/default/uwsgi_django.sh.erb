@@ -4,7 +4,7 @@ export LANG='en_US.UTF-8'
 export LC_ALL='en_US.UTF-8'
 
 PROJDIR=`pwd`
-PROJECT=$(basename $(dirname $PROJDIR))
+PROJECT=$(basename $PROJDIR)
 PACKAGE=${PACKAGE:=$PROJECT}
 
 UWSGI_PIDFILE=${UWSGI_PIDFILE:="$PROJDIR/tmp/uwsgi.pid"}
@@ -18,13 +18,13 @@ UWSGI_LIMIT_AS=${UWSGI_LIMIT_AS:=256}
 UWSGI_EVIL_RELOAD_ON_AS=${UWSGI_EVIL_RELOAD_ON_AS:=$UWSGI_LIMIT_AS}
 UWSGI_EVIL_RELOAD_ON_RSS=${UWSGI_EVIL_RELOAD_ON_RSS:=96}
 UWSGI_HARAKIRI=${UWSGI_HARAKIRI:=90}
+UWSGI_DAEMONIZE=${UWSGI_DAEMONIZE:="<%= node.supervisor_django.uwsgi.logdir %>/$PROJECT.log"}
 
 [ -f uwsgi.ini ] && INI="--ini uwsgi.ini"
 
 exec $UWSGI_BINARY_PATH \
 	--binary-path $UWSGI_BINARY_PATH \
-	--plugins python27 \
-	--pyhome "$(dirname $PROJDIR)/.env" \
+	--home=$PROJDIR/.env \
 	--env DJANGO_SETTINGS_MODULE=$PACKAGE.settings \
 	--module $PACKAGE.wsgi:application \
 	--procname "$PROJECT: django uwsgi" \
@@ -47,4 +47,5 @@ exec $UWSGI_BINARY_PATH \
 	--evil-reload-on-as $UWSGI_EVIL_RELOAD_ON_AS \
 	--evil-reload-on-rss $UWSGI_EVIL_RELOAD_ON_RSS \
 	--show-config \
+    --daemonize=$UWSGI_DAEMONIZE \
 	$INI
