@@ -9,6 +9,7 @@ python_pip "uwsgi" do
 end
 
 directory "#{node.supervisor_django.uwsgi.logdir}" do
+  user "#{node.djangosite.name}"
   action :create
 end
 
