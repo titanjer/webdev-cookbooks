@@ -8,7 +8,7 @@ python_pip "uwsgi" do
   version node['supervisor_django']['uwsgi']['version']
 end
 
-template "#{node.supervisor_django.uwsgi.logdir}" do
+directory "#{node.supervisor_django.uwsgi.logdir}" do
   action :create
 end
 
